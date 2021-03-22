@@ -1,0 +1,194 @@
+package com.example.demo.controller;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.example.demo.dao.Appointment;
+import com.example.demo.entity.AppointmentEntity;
+import com.example.demo.entity.DoctorEntity;
+import com.example.demo.entity.HospitalEntity;
+import com.example.demo.repository.AppointmentRepository;
+import com.example.demo.repository.DoctorRepository;
+import com.example.demo.repository.HospitalRepository;
+import com.example.demo.service.AppointmentService;
+import com.example.demo.service.DoctorService;
+import com.example.demo.service.HospitalService;
+
+@Controller
+@RequestMapping("/hospital")
+public class HospitalDao {
+
+	@Autowired
+	HospitalService hospitalService;
+	
+	@Autowired
+	DoctorService doctorService;
+	
+	@Autowired
+	AppointmentService appointmentService;
+	
+	//@Autowired
+	//DoctorRepository doctorRepository;
+	
+	//@Autowired
+	//HospitalRepository hospitalRepository;
+	
+	@GetMapping("/login")
+	  public ModelAndView Admin() {
+		ModelAndView mv=new ModelAndView("HspLogin");
+	  return mv;
+	  }
+	
+	@PostMapping("/AuthentHsplogin")
+	public ModelAndView AuthenticateHospital(String hspUsername,String hspPassword) {	
+		HospitalEntity hospitalEntity=hospitalService.AuthenticateHospital(hspUsername, hspPassword);	
+		if(hospitalEntity!=null) {
+			ModelAndView mv=new ModelAndView("hospital");
+			mv.addObject("hospital", hospitalEntity);
+			return mv;
+		}		
+		else {
+			ModelAndView mv=new ModelAndView("HspLogin");
+			mv.addObject("HspLogFail", 0);
+			return mv;
+		}
+	}
+	
+	
+	
+	     //get doctor list using two way using hospitalService and using doctorService
+	      //read all doctor list
+			@PostMapping("/drList")
+			  public ModelAndView drList(String hspId) {				
+				if(hspId==null) {
+					ModelAndView mv=new ModelAndView("HspLogin");	
+					return mv;
+				}			
+				ModelAndView mv=new ModelAndView("hospital");	
+				HospitalEntity hospitalEntity=hospitalService.getHospital(hspId);				
+				List<DoctorEntity> drList=doctorService.drList(hspId);
+				mv.addObject("hospital", hospitalEntity);
+				mv.addObject("drList", drList);
+				mv.addObject("DRLIST", 1);
+			    return mv;
+			  }
+			
+			//update dr status			
+			@PostMapping("/editDrStatus")
+			  public ModelAndView editDrStatus(String drId,String hspId) {
+				doctorService.editDrStatus(drId, hspId);				
+				ModelAndView mv=new ModelAndView("hospital");	
+				HospitalEntity hospitalEntity=hospitalService.getHospital(hspId);				
+				List<DoctorEntity> drList=doctorService.drList(hspId);
+				mv.addObject("hospital", hospitalEntity);
+				mv.addObject("drList", drList);
+				mv.addObject("DRLIST", 1);
+			    return mv;
+			  }
+			
+			//update bed count
+			@PostMapping("/editHspBedOpt")
+			  public ModelAndView editHspBedOpt(String hspId) {
+				ModelAndView mv=new ModelAndView("hospital");				
+				HospitalEntity hospitalEntity=hospitalService.editHspBedOpt(hspId);
+				mv.addObject("hospital",hospitalEntity );
+				mv.addObject("editHspProf", 1);
+				mv.addObject("hspprofile", 2);	
+			    return mv;
+			  }
+			
+			@PostMapping("/updateHspBedcount")
+			 public ModelAndView updateHspBedcount(String hspId,String hspBNo) {
+				      ModelAndView mv=new ModelAndView("hospital");
+				      HospitalEntity hospitalEntity=hospitalService.updateHspBedcount(hspId, hspBNo);
+						mv.addObject("hospital",hospitalEntity );
+						mv.addObject("editHspProf", 1);
+						mv.addObject("hspprofile", 1);	
+					return mv;
+			}
+			
+			@PostMapping("/editDrOpt")
+			  public ModelAndView editDrOpt(String drId,String hspId) {
+				ModelAndView mv=new ModelAndView("hospital");												
+				DoctorEntity drOldInfo=doctorService.getSingleDoctor(drId, hspId);					
+				HospitalEntity hospitalEntity=hospitalService.getHospital(hspId);
+				mv.addObject("hospital",hospitalEntity );
+				mv.addObject("drOldInfo",drOldInfo );
+				mv.addObject("editDrProf", 1);
+				mv.addObject("drprofile", 2);	
+			    return mv;
+			  }
+			
+			@PostMapping("/updateDr")
+			 public ModelAndView updateDr(String id,String drName,String drSpec,String drEmail,String drMobile,String drUsername,String drPassword,String hspId) {
+				      ModelAndView mv=new ModelAndView("hospital");				    
+				      DoctorEntity doctorEntity=doctorService.updateDr(id, drName, drSpec, drEmail, drMobile, drUsername, drPassword, hspId);				     				     			
+					mv.addObject("editDrProf", 1);
+					mv.addObject("drprofile", 1);				
+					HospitalEntity hospitalEntity=hospitalService.getHospital(hspId);
+					mv.addObject("hospital",hospitalEntity );
+					System.out.println("doctor updated successfully in admin dao");
+					return mv;
+			}
+			
+			@PostMapping("/delDr")
+			  public ModelAndView deleteDr(String drId,String hspId) {
+				ModelAndView mv=new ModelAndView("hospital");	
+
+				appointmentService.deleteDrAppointments(drId);								
+				doctorService.deleteDr(drId, hspId);
+				
+				HospitalEntity hospitalEntity=hospitalService.getHospital(hspId);				
+				List<DoctorEntity> drList=doctorService.drList(hspId);
+				
+				mv.addObject("hospital", hospitalEntity);
+				mv.addObject("drList", drList);
+				mv.addObject("DRLIST", 1);
+				System.out.println("doctor deleted successfully in hospital dao");
+			    return mv;
+			  }
+			
+			@PostMapping("/addDrOpt")
+			  public ModelAndView addDrOpt(String hspId) {
+				ModelAndView mv=new ModelAndView("hospital");				
+				HospitalEntity hospitalEntity=hospitalService.getHospital(hspId);
+				 mv.addObject("hospital", hospitalEntity);
+				mv.addObject("addDrWindow", 1);
+				mv.addObject("drReg", 2);
+			    return mv;
+			  }
+			
+			@PostMapping("/addDr")
+			  public ModelAndView addDr(String drName,String drSpec,String drEmail,String drMobile,String drUsername,String drPassword,String hspId) {
+				ModelAndView mv=new ModelAndView("hospital");
+				int hospId=Integer.parseInt(hspId);		
+				DoctorEntity doctorEntity=new DoctorEntity(drName,drSpec,drEmail,drMobile,drUsername,drPassword,false,hospId);
+				doctorService.addDr(doctorEntity);
+				HospitalEntity hospitalEntity=hospitalService.getHospital(hspId);
+				mv.addObject("hospital", hospitalEntity);
+				mv.addObject("drReg", 1);
+				mv.addObject("addDrWindow", 1);
+				System.out.println("doctor added successfully in hospital dao");
+			    return mv;
+			  }
+			
+			
+			@PostMapping("/hospProfile")
+			  public ModelAndView hospProfile(String hspId) {
+				ModelAndView mv=new ModelAndView("hospitalProfile");				
+				HospitalEntity hospitalEntity=hospitalService.getHospital(hspId);
+				 mv.addObject("hospital", hospitalEntity);
+				
+			    return mv;
+			  }
+			
+			
+			
+}

@@ -51,6 +51,7 @@
 .title {
 	color: grey;
 	font-size: 18px;
+	font-family: arial;
 }
 
 
